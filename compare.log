@@ -1,0 +1,16 @@
+=== LOCAL ===
+  'duplicate digests dropped'
+     -> Collector > Suppression   (cos +0.4619)
+  "why didn't it send the same thing twice"
+     -> Collector > Suppression   (cos +0.0626)
+  'what happens when a fetch briefly fails'
+     -> Collector   (cos +0.0000)
+
+=== VERTEX ===
+  'duplicate digests dropped'
+     -> Collector > Suppression   (cos +0.8069)
+  "why didn't it send the same thing twice"
+     -> Collector > Suppression   (cos +0.6914)
+  'what happens when a fetch briefly fails'
+     -> Collector > Retries   (cos +0.7031)
+

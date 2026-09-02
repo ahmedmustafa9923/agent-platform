@@ -56,3 +56,55 @@ class LocalHashingEmbedder:
 
     def embed_query(self, text: str) -> list[float]:
         return self._embed_one(text)
+
+class VertexEmbedder:
+    _BATCH = 1
+
+    def __init__(self, model="gemini-embedding-001", dim=768, project=None, location="us-central1"):
+        self._model_name = model
+        self._dim = dim
+        self._project = project
+        self._location = location
+        self._client = None
+
+    @property
+    def dim(self) -> int:
+        return self._dim
+
+    def _ensure_client(self):
+        if self._client is None:
+            from google import genai
+
+            self._client = genai.Client(
+                vertexai=True, project=self._project, location=self._location
+            )
+        return self._client
+
+    def _normalize(self, values):
+        norm = math.sqrt(sum(v * v for v in values))
+        if norm == 0.0:
+            return list(values)
+        return [v / norm for v in values]
+
+    def _embed(self, texts, task_type):
+        from google.genai.types import EmbedContentConfig
+
+        client = self._ensure_client()
+        config = EmbedContentConfig(task_type=task_type, output_dimensionality=self._dim)
+
+        out = []
+        for start in range(0, len(texts), self._BATCH):
+            batch = list(texts[start:start + self._BATCH])
+            response = client.models.embed_content(
+                model=self._model_name, contents=batch, config=config
+            )
+            out.extend(self._normalize(e.values) for e in response.embeddings)
+        return out
+
+    def embed_documents(self, texts):
+        if not texts:
+            return []
+        return self._embed(texts, "RETRIEVAL_DOCUMENT")
+
+    def embed_query(self, text):
+        return self._embed([text], "RETRIEVAL_QUERY")[0]
