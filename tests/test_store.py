@@ -1,26 +1,6 @@
-import uuid
-
 import pytest
 
-from agent_rag.store import PgVectorStore
 from agent_rag.chunking import chunk_markdown
-from agent_rag.embeddings import LocalHashingEmbedder
-
-DOC = """\
-# Collector
-
-The collector fetches postings every fifteen minutes.
-
-## Retries
-
-Transient failures are retried with exponential backoff.
-
-## Suppression
-
-Duplicate digests are dropped before sending.
-"""
-
-
 
 
 def test_schema_creation_is_idempotent(store):
@@ -30,29 +10,22 @@ def test_schema_creation_is_idempotent(store):
 def test_new_table_starts_empty(store):
     assert store.count() == 0
 
-@pytest.fixture
-def indexed(store):
-    embedder = LocalHashingEmbedder()
-    chunks = chunk_markdown("collector.md", DOC)
-    store.upsert(chunks, embedder.embed_documents([c.embedding_text for c in chunks]))
-    return store, embedder
-
 
 def test_upsert_writes_every_chunk(indexed):
     store, _ = indexed
     assert store.count() == 3
 
 
-def test_upsert_twice_updates_rather_than_duplicates(indexed):
+def test_upsert_twice_updates_rather_than_duplicates(indexed, doc):
     store, embedder = indexed
-    chunks = chunk_markdown("collector.md", DOC)
+    chunks = chunk_markdown("collector.md", doc)
     store.upsert(chunks, embedder.embed_documents([c.embedding_text for c in chunks]))
     assert store.count() == 3
 
 
-def test_upsert_rejects_mismatched_lengths(store):
+def test_upsert_rejects_mismatched_lengths(store, doc):
     with pytest.raises(ValueError):
-        store.upsert(chunk_markdown("d.md", DOC), [])
+        store.upsert(chunk_markdown("d.md", doc), [])
 
 
 def test_search_finds_the_matching_section(indexed):
