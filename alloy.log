@@ -1,0 +1,6 @@
+host: 35.253.203.87:5432/postgres?sslmode=require
+rows in AlloyDB: 3
+  "why didn't it send the same thing twice"
+     -> Collector > Suppression   (rrf 0.03279)
+  'what happens when a fetch briefly fails'
+     -> Collector   (rrf 0.03252)
